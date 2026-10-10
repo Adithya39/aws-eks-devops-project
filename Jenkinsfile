@@ -1,4 +1,4 @@
-pipeline{
+pipeline {
     agent any
 
     options {
@@ -14,31 +14,36 @@ pipeline{
         stage('Git checkout step') {
             steps {
                 checkout scm
-            }                       
-        }    
+            }
+        }
 
         stage('Validate the files') {
             steps {
                 sh '''
                     test -f app/index.html
                     test -f Dockerfile
-                    echo "Application  and Dcoker found"
-                    '''
+                    echo "Application and Dockerfile found"
+                '''
             }
         }
-        stage("Build the image") {
-            steps {
-                sh ''' 
-                    docker build -t $IMAGE_NAME:$BUILD_NUMBER .aws-eks-devops-project
-                   ''' 
-            }   
-        }  
 
-        stage("verify the image") {
+        stage('Build the image') {
             steps {
-                sh ''' docker image inspect  ${IMAGE_NAME}:{$IMAGE_TAG}
+                sh '''
+                    docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                '''
             }
-        }  
+        }
+
+        stage('Verify the image') {
+            steps {
+                sh '''
+                    docker image inspect ${IMAGE_NAME}:${IMAGE_TAG}
+                '''
+            }
+        }
+    }
+
     post {
         success {
             echo 'Docker image built and verified successfully.'
@@ -46,7 +51,5 @@ pipeline{
         failure {
             echo 'Pipeline failed. Check the stage logs.'
         }
-    }
-    
     }
 }
