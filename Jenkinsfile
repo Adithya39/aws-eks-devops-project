@@ -29,8 +29,8 @@ pipeline {
                     set -eu
                     test -f app/index.html
                     test -f Dockerfile
-                    test -f k8s/deployment.yaml
-                    test -f k8s/service.yaml
+                    test -f K8s/deployment.yaml
+                    test -f K8s/service.yaml
                     echo "All required files found"
                 '''
             }
@@ -88,9 +88,9 @@ pipeline {
                     set -eu
 
                     sed "s|IMAGE_PLACEHOLDER|${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}|g" \
-                      k8s/deployment.yaml | kubectl apply -f -
+                      K8s/deployment.yaml | kubectl apply -f -
 
-                    kubectl apply -f k8s/service.yaml
+                    kubectl apply -f K8s/service.yaml
 
                     kubectl rollout status deployment/cloudops-app \
                       --timeout=180s
