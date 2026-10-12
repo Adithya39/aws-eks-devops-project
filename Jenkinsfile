@@ -13,6 +13,7 @@ pipeline {
         IMAGE_NAME = 'cloudops-app'
         IMAGE_TAG = "${BUILD_NUMBER}"
         ECR_REGISTRY = '933367720819.dkr.ecr.ap-south-1.amazonaws.com'
+        EKS_CLUSTER_NAME = 'cloudops-eks'
     }
 
     stages {
@@ -76,6 +77,34 @@ pipeline {
             }
         }
     }
+        stage('Configure EKS Access') {
+    steps {
+        sh '''
+            set -eu
+            aws eks update-kubeconfig \
+              --region ${AWS_REGION} \
+              --name ${EKS_CLUSTER_NAME}
+
+            kubectl get deployment cloudops-app
+        '''
+    }
+}
+
+stage('Deploy to EKS') {
+    steps {
+        sh '''
+            set -eu
+
+            sed "s|IMAGE_PLACEHOLDER|${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}|g" \
+              k8s/deployment.yaml | kubectl apply -f -
+
+            kubectl apply -f k8s/service.yaml
+
+            kubectl rollout status deployment/cloudops-app \
+              --timeout=180s
+        '''
+    }
+}    
 
     post {
         success {
